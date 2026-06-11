@@ -11,6 +11,7 @@ class Domain(str, Enum):
     testing = "testing"
     database = "database"
     system_design = "system_design"
+    other = "other"
 
 
 class DimensionName(str, Enum):
@@ -53,6 +54,8 @@ class EvaluationResult(BaseModel):
 class EvaluationRequest(BaseModel):
     prompt: str
     domain: Domain
+    reformat: bool = True
+    domain_hint: str = ""
 
 
 class AnalyticsResult(BaseModel):

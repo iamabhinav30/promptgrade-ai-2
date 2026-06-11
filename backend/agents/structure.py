@@ -17,7 +17,7 @@ def _call_llm(system_prompt: str, user_prompt: str) -> str:
         model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
+            {"role": "user",   "content": user_prompt},
         ],
         temperature=0.1,
         max_tokens=2000,
@@ -26,17 +26,22 @@ def _call_llm(system_prompt: str, user_prompt: str) -> str:
 
 
 def structure_node(state: GraphState) -> GraphState:
-    eid = state.get("evaluation_id", "")
+    eid             = state.get("evaluation_id", "")
+    prompt_category = state.get("prompt_category", "general")
+    original_prompt = state["current_prompt"]
+
     progress.emit(eid, "structure", "running")
 
-    system_prompt = build_structure_prompt()
-    structured = _call_llm(system_prompt, state["current_prompt"])
+    # Build category-aware structure prompt — the full system prompt includes
+    # the original prompt embedded, so the user message is just a trigger.
+    system_prompt = build_structure_prompt(original_prompt, prompt_category)
+    structured    = _call_llm(system_prompt, "Structure the prompt above.")
 
     if not structured or len(structured) < 50:
-        structured = state["current_prompt"]
+        structured = original_prompt
 
     state["structured_prompt"] = structured
-    state["current_prompt"] = structured
+    state["current_prompt"]    = structured
 
     progress.emit(eid, "structure", "complete")
     return state

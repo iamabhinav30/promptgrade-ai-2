@@ -15,6 +15,7 @@ const DOMAINS: { value: Domain; label: string }[] = [
   { value: "testing",       label: "Testing" },
   { value: "database",      label: "Database" },
   { value: "system_design", label: "System Design" },
+  { value: "other",         label: "Other" },
 ];
 
 const EXAMPLES: Record<Domain, string> = {
@@ -24,6 +25,7 @@ const EXAMPLES: Record<Domain, string> = {
   testing:       "Write unit tests for a user registration service that validates email, hashes passwords, and sends confirmation emails.",
   database:      "Design a SQL schema for a multi-tenant SaaS application with users, organizations, roles, and audit logging.",
   system_design: "Design a real-time notification system that handles 1M concurrent users with guaranteed delivery and sub-100ms latency.",
+  other:         "Write a cover letter for a senior software engineer applying to a product-led startup, highlighting distributed systems experience and open-source contributions.",
 };
 
 type Tab = "text" | "file" | "batch";
@@ -35,15 +37,17 @@ type BatchItem = {
   error?: string;
 };
 
-function completeEvents(data: EvaluationResult): AgentProgressEvent[] {
-  return [
+function completeEvents(data: EvaluationResult, reformat: boolean): AgentProgressEvent[] {
+  const events: AgentProgressEvent[] = [
     { agent: "intake",    status: "complete" },
-    { agent: "structure", status: "complete" },
+    { agent: "classify",  status: "complete" },
     { agent: "evaluate",  status: "complete", score: data.originalScore },
     { agent: "rewrite",   status: "complete", iteration: Math.max(data.iterationCount - 1, 0) },
     { agent: "validate",  status: "complete" },
     { agent: "report",    status: "complete", improvementPct: data.improvementPct },
   ];
+  if (reformat) events.splice(2, 0, { agent: "structure", status: "complete" });
+  return events;
 }
 
 function ScorePill({ score }: { score: number }) {
@@ -61,18 +65,20 @@ function ScorePill({ score }: { score: number }) {
 }
 
 export default function Evaluate() {
-  const [tab, setTab]               = useState<Tab>("text");
-  const [prompt, setPrompt]         = useState("");
-  const [domain, setDomain]         = useState<Domain>("frontend");
-  const [file, setFile]             = useState<File | null>(null);
-  const [batchFiles, setBatchFiles] = useState<File[]>([]);
-  const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
-  const [loading, setLoading]       = useState(false);
-  const [events, setEvents]         = useState<AgentProgressEvent[]>([]);
-  const [result, setResult]         = useState<EvaluationResult | null>(null);
-  const [error, setError]           = useState("");
-  const fileRef                     = useRef<HTMLInputElement>(null);
-  const batchRef                    = useRef<HTMLInputElement>(null);
+  const [tab, setTab]                     = useState<Tab>("text");
+  const [prompt, setPrompt]               = useState("");
+  const [domain, setDomain]               = useState<Domain>("frontend");
+  const [domainHint, setDomainHint]       = useState("");
+  const [reformatPrompt, setReformatPrompt] = useState(true);
+  const [file, setFile]                   = useState<File | null>(null);
+  const [batchFiles, setBatchFiles]       = useState<File[]>([]);
+  const [batchItems, setBatchItems]       = useState<BatchItem[]>([]);
+  const [loading, setLoading]             = useState(false);
+  const [events, setEvents]               = useState<AgentProgressEvent[]>([]);
+  const [result, setResult]               = useState<EvaluationResult | null>(null);
+  const [error, setError]                 = useState("");
+  const fileRef                           = useRef<HTMLInputElement>(null);
+  const batchRef                          = useRef<HTMLInputElement>(null);
 
   function mergeEvent(ev: AgentProgressEvent) {
     setEvents(prev => {
@@ -89,9 +95,9 @@ export default function Evaluate() {
     try {
       if (tab === "batch") { await runBatch(); return; }
       const data = tab === "file" && file
-        ? await evaluateFileStream(file, domain, mergeEvent)
-        : await evaluatePromptStream(prompt, domain, mergeEvent);
-      setEvents(completeEvents(data));
+        ? await evaluateFileStream(file, domain, mergeEvent, reformatPrompt, domainHint)
+        : await evaluatePromptStream(prompt, domain, mergeEvent, reformatPrompt, domainHint);
+      setEvents(completeEvents(data, reformatPrompt));
       setResult(data);
     } catch (e: unknown) {
       setError((e as { message?: string })?.message || "Evaluation failed");
@@ -170,7 +176,7 @@ export default function Evaluate() {
             {DOMAINS.map((d) => (
               <button
                 key={d.value}
-                onClick={() => setDomain(d.value)}
+                onClick={() => { setDomain(d.value); if (d.value !== "other") setDomainHint(""); }}
                 className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition-all duration-150 ${
                   domain === d.value
                     ? "border-violet-500/50 bg-violet-600/20 text-violet-300 ring-1 ring-inset ring-violet-500/30"
@@ -181,7 +187,60 @@ export default function Evaluate() {
               </button>
             ))}
           </div>
+
+          {domain === "other" && (
+            <div className="mt-4">
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+                  Describe the prompt type
+                  <span className="ml-2 rounded-full border border-white/[0.08] px-2 py-0.5 text-[10px] font-normal normal-case tracking-normal text-gray-600">optional</span>
+                </label>
+              </div>
+              <textarea
+                rows={2}
+                maxLength={300}
+                value={domainHint}
+                onChange={(e) => setDomainHint(e.target.value)}
+                placeholder="e.g. creative writing, legal analysis, product copy, data analysis, customer support script…"
+                className="w-full resize-none rounded-lg border border-white/[0.06] bg-[var(--pg-page)] px-4 py-2.5 text-sm text-gray-200 placeholder-gray-700 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors leading-relaxed"
+              />
+              <p className="mt-1.5 text-[11px] text-gray-600">
+                Helps the evaluator apply the right rubric lens. Leave blank to evaluate with universal criteria only.
+              </p>
+            </div>
+          )}
         </div>
+
+        {/* Reformat toggle */}
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-4 py-3 transition-colors hover:bg-white/[0.04]">
+          <div className="relative mt-0.5 flex-shrink-0">
+            <input
+              type="checkbox"
+              checked={reformatPrompt}
+              onChange={(e) => setReformatPrompt(e.target.checked)}
+              className="sr-only"
+            />
+            <div className={`h-4 w-4 rounded border transition-all duration-150 flex items-center justify-center ${
+              reformatPrompt
+                ? "border-violet-500 bg-violet-600"
+                : "border-white/[0.15] bg-white/[0.03]"
+            }`}>
+              {reformatPrompt && (
+                <svg className="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-white">Auto-reformat into structured template</p>
+            <p className="mt-0.5 text-xs text-gray-500">
+              {reformatPrompt
+                ? "Your prompt will be restructured by the Structure agent before scoring"
+                : "Your prompt will be evaluated as-is, skipping the Structure agent"}
+            </p>
+          </div>
+        </label>
 
         {/* Text input */}
         {tab === "text" && (
@@ -308,7 +367,7 @@ export default function Evaluate() {
 
       {/* Pipeline progress */}
       {tab !== "batch" && (loading || events.length > 0) && (
-        <AgentProgress events={events} isLoading={loading} />
+        <AgentProgress events={events} isLoading={loading} skipStructure={!reformatPrompt} />
       )}
 
       {/* Batch results table */}
@@ -365,7 +424,7 @@ export default function Evaluate() {
             <ScoreGauge score={result.originalScore} label="Original Score" />
             <ScoreGauge score={result.finalScore}    label="Final Score" />
           </div>
-          <StructuredPromptViewer content={result.structuredPrompt || result.finalPrompt} />
+          {reformatPrompt && <StructuredPromptViewer content={result.structuredPrompt || result.finalPrompt} />}
           <ScoreCard result={result} />
           <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
             <h2 className="mb-1 text-sm font-semibold text-white">Dimension Analysis</h2>

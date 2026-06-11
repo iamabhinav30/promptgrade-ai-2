@@ -27,6 +27,8 @@ def intake_node(state: GraphState) -> GraphState:
     state["original_prompt"]   = prompt
     state["current_prompt"]    = prompt
     state["structured_prompt"] = ""
+    state["prompt_category"]   = ""
+    state["previous_score"]    = 0.0
     state["retries"]           = 0
     state["best_score"]        = 0.0
     state["score"]             = 0.0

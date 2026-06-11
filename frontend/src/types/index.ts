@@ -1,4 +1,4 @@
-export type Domain = "frontend" | "backend" | "devops" | "testing" | "database" | "system_design";
+export type Domain = "frontend" | "backend" | "devops" | "testing" | "database" | "system_design" | "other";
 
 export type DimensionName =
   | "clarity"

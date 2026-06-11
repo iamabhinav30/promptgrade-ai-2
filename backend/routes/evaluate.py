@@ -24,13 +24,17 @@ async def publish_event(evaluation_id: str, event: AgentProgressEvent) -> None:
     await queue.put(event.model_dump())
 
 
-def _build_initial_state(prompt: str, domain: str, evaluation_id: str = "") -> dict[str, Any]:
+def _build_initial_state(prompt: str, domain: str, evaluation_id: str = "", reformat: bool = True, domain_hint: str = "") -> dict[str, Any]:
     return {
         "session_id": "",
         "original_prompt": prompt,
         "domain": domain,
         "current_prompt": prompt,
         "structured_prompt": "",
+        "reformat_prompt": reformat,
+        "domain_hint": domain_hint,
+        "prompt_category": "",
+        "previous_score": 0.0,
         "retries": 0,
         "best_score": 0.0,
         "score": 0.0,
@@ -130,7 +134,7 @@ async def evaluate_prompt_stream(request_body: EvaluationRequest):
         raise HTTPException(status_code=400, detail="Prompt must be between 20 and 8000 characters.")
     try:
         evaluation_id = str(uuid4())
-        initial_state = _build_initial_state(prompt, request_body.domain.value, evaluation_id)
+        initial_state = _build_initial_state(prompt, request_body.domain.value, evaluation_id, reformat=request_body.reformat, domain_hint=request_body.domain_hint)
         progress_mod.ensure(evaluation_id)
         return _sse_response(_run_streaming(initial_state))
     except ValueError as exc:
@@ -143,6 +147,8 @@ async def evaluate_prompt_stream(request_body: EvaluationRequest):
 async def evaluate_file_stream(
     file: UploadFile = File(...),
     domain: str = Form(...),
+    reformat: bool = Form(True),
+    domain_hint: str = Form(""),
 ):
     allowed = {d.value for d in Domain}
     if domain not in allowed:
@@ -162,7 +168,7 @@ async def evaluate_file_stream(
         raise HTTPException(status_code=400, detail="File content is too long (maximum 8000 characters).")
 
     evaluation_id = str(uuid4())
-    initial_state = _build_initial_state(prompt, domain, evaluation_id)
+    initial_state = _build_initial_state(prompt, domain, evaluation_id, reformat=reformat, domain_hint=domain_hint)
     progress_mod.ensure(evaluation_id)
     return _sse_response(_run_streaming(initial_state))
 

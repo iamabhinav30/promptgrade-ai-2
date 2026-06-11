@@ -58,11 +58,13 @@ export async function evaluatePromptStream(
   prompt: string,
   domain: Domain,
   onEvent: (e: AgentProgressEvent) => void,
+  reformat = true,
+  domainHint = "",
 ): Promise<EvaluationResult> {
   const response = await fetch(`${BASE_URL}/api/evaluate/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, domain }),
+    body: JSON.stringify({ prompt, domain, reformat, domain_hint: domainHint }),
   });
   return _readStream(response, onEvent);
 }
@@ -71,10 +73,14 @@ export async function evaluateFileStream(
   file: File,
   domain: Domain,
   onEvent: (e: AgentProgressEvent) => void,
+  reformat = true,
+  domainHint = "",
 ): Promise<EvaluationResult> {
   const form = new FormData();
   form.append("file", file);
   form.append("domain", domain);
+  form.append("reformat", String(reformat));
+  form.append("domain_hint", domainHint);
   const response = await fetch(`${BASE_URL}/api/evaluate/upload/stream`, {
     method: "POST",
     body: form,
