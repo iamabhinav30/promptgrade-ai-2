@@ -1,11 +1,12 @@
 import type { AgentProgressEvent } from "../types";
 
 const STEPS = [
-  { key: "intake",   label: "Intake",   desc: "Validating" },
-  { key: "evaluate", label: "Evaluate", desc: "Scoring" },
-  { key: "rewrite",  label: "Rewrite",  desc: "Improving" },
-  { key: "validate", label: "Validate", desc: "Checking" },
-  { key: "report",   label: "Report",   desc: "Saving" },
+  { key: "intake",    label: "Intake",    desc: "Validating" },
+  { key: "structure", label: "Structure", desc: "Formatting" },
+  { key: "evaluate",  label: "Evaluate",  desc: "Scoring" },
+  { key: "rewrite",   label: "Rewrite",   desc: "Improving" },
+  { key: "validate",  label: "Validate",  desc: "Checking" },
+  { key: "report",    label: "Report",    desc: "Saving" },
 ];
 
 function getStatus(key: string, events: AgentProgressEvent[]): "pending" | "running" | "complete" {

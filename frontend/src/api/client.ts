@@ -8,10 +8,109 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-export async function evaluatePrompt(prompt: string, domain: Domain): Promise<EvaluationResult> {
-  const response = await api.post<EvaluationResult>("/api/evaluate", { prompt, domain });
-  return response.data;
+// ── Streaming evaluate (primary – real-time agent progress) ──────────────────
+
+async function _readStream(
+  response: Response,
+  onEvent: (e: AgentProgressEvent) => void,
+): Promise<EvaluationResult> {
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as Record<string, string>).detail || `HTTP ${response.status}`);
+  }
+
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: EvaluationResult | null = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    // SSE events are separated by double newlines
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const line = part.trim();
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const data = JSON.parse(line.slice(6)) as Record<string, unknown>;
+        if (data.type === "result") {
+          const { type: _t, ...rest } = data;
+          result = rest as unknown as EvaluationResult;
+        } else {
+          onEvent(data as unknown as AgentProgressEvent);
+        }
+      } catch {
+        // ignore malformed lines
+      }
+    }
+  }
+
+  if (!result) throw new Error("No result received from server");
+  return result;
 }
+
+export async function evaluatePromptStream(
+  prompt: string,
+  domain: Domain,
+  onEvent: (e: AgentProgressEvent) => void,
+): Promise<EvaluationResult> {
+  const response = await fetch(`${BASE_URL}/api/evaluate/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, domain }),
+  });
+  return _readStream(response, onEvent);
+}
+
+export async function evaluateFileStream(
+  file: File,
+  domain: Domain,
+  onEvent: (e: AgentProgressEvent) => void,
+): Promise<EvaluationResult> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("domain", domain);
+  const response = await fetch(`${BASE_URL}/api/evaluate/upload/stream`, {
+    method: "POST",
+    body: form,
+  });
+  return _readStream(response, onEvent);
+}
+
+// ── Batch file evaluation ─────────────────────────────────────────────────────
+
+export async function evaluateBatch(
+  files: File[],
+  domain: Domain,
+  onFileStart: (index: number) => void,
+  onFileComplete: (index: number, result: EvaluationResult) => void,
+  onFileError: (index: number, error: string) => void,
+): Promise<EvaluationResult[]> {
+  const results: EvaluationResult[] = [];
+  for (let i = 0; i < files.length; i++) {
+    onFileStart(i);
+    try {
+      const form = new FormData();
+      form.append("file", files[i]);
+      form.append("domain", domain);
+      const response = await axios.post<EvaluationResult>(`${BASE_URL}/api/evaluate/upload`, form);
+      results.push(response.data);
+      onFileComplete(i, response.data);
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { detail?: string } }; message?: string })
+        ?.response?.data?.detail ?? (e as { message?: string })?.message ?? "Failed";
+      onFileError(i, msg);
+    }
+  }
+  return results;
+}
+
+// ── REST helpers ──────────────────────────────────────────────────────────────
 
 export async function getEvaluations(domain?: Domain | "", limit = 20, offset = 0): Promise<EvaluationListResponse> {
   const response = await api.get<EvaluationListResponse>("/api/evaluations", {

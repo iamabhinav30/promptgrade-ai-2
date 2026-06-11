@@ -3,12 +3,14 @@ import Evaluate from "./pages/Evaluate";
 import History from "./pages/History";
 import Home from "./pages/Home";
 import Leaderboard from "./pages/Leaderboard";
+import Plans from "./pages/Plans";
 
 const NAV = [
   { to: "/",            end: true,  label: "Dashboard"   },
   { to: "/evaluate",    end: false, label: "Evaluate"    },
   { to: "/history",     end: false, label: "History"     },
   { to: "/leaderboard", end: false, label: "Leaderboard" },
+  { to: "/roadmap",     end: false, label: "Roadmap"     },
 ];
 
 export default function App() {
@@ -22,7 +24,9 @@ export default function App() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-purple-700 text-[11px] font-bold text-white shadow-md shadow-violet-900/40">
               PG
             </div>
-            <span className="text-sm font-semibold text-white">PromptGrade <span className="text-gray-500 font-normal">AI</span></span>
+            <span className="text-sm font-semibold text-white">
+              PromptGrade <span className="text-gray-500 font-normal">AI</span>
+            </span>
           </NavLink>
 
           {/* Nav links */}
@@ -45,7 +49,7 @@ export default function App() {
             ))}
           </nav>
 
-          {/* Status dot */}
+          {/* Status */}
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/60" />
             <span className="text-[11px] text-gray-600">v1.0</span>
@@ -60,6 +64,7 @@ export default function App() {
           <Route path="/evaluate"    element={<Evaluate />} />
           <Route path="/history"     element={<History />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/roadmap"     element={<Plans />} />
         </Routes>
       </main>
     </div>

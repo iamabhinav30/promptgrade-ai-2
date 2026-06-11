@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
+import progress
 from graph.state import GraphState
 from prompts.rewriter_system import build_rewriter_prompt
 
@@ -25,6 +26,10 @@ def _rewrite(system_prompt: str, current_prompt: str) -> str:
 
 
 def rewriter_node(state: GraphState) -> GraphState:
+    eid = state.get("evaluation_id", "")
+    retry_num = int(state.get("retries", 0)) + 1
+    progress.emit(eid, "rewrite", "running", iteration=retry_num)
+
     system_prompt = build_rewriter_prompt(
         original_prompt=state["original_prompt"],
         domain=state["domain"],
@@ -39,7 +44,9 @@ def rewriter_node(state: GraphState) -> GraphState:
     if not rewritten:
         rewritten = state["current_prompt"]
 
-    state["retries"] = int(state.get("retries", 0)) + 1
+    state["retries"] = retry_num
     state["rewritten_prompt"] = rewritten
     state["current_prompt"] = rewritten
+
+    progress.emit(eid, "rewrite", "complete", iteration=retry_num)
     return state

@@ -6,6 +6,7 @@ from typing import Any
 from dotenv import load_dotenv
 from openai import OpenAI
 
+import progress
 from graph.state import GraphState
 from prompts.evaluation_system import build_evaluation_prompt
 
@@ -93,6 +94,10 @@ def _validate_response(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def evaluate_node(state: GraphState) -> GraphState:
+    eid = state.get("evaluation_id", "")
+    iteration_num = len(state.get("iterations", [])) + 1
+    progress.emit(eid, "evaluate", "running", iteration=iteration_num)
+
     domain = state["domain"]
     rubric = _load_rubric(domain)
     system_prompt = build_evaluation_prompt(domain, rubric)
@@ -116,10 +121,12 @@ def evaluate_node(state: GraphState) -> GraphState:
     state["best_score"] = max(float(state.get("best_score", 0.0)), score)
 
     iteration = {
-        "iterationNumber": len(state.get("iterations", [])) + 1,
+        "iterationNumber": iteration_num,
         "score": score,
         "dimensions": validated["dimensions"],
         "rewrittenPrompt": state["current_prompt"],
     }
     state.setdefault("iterations", []).append(iteration)
+
+    progress.emit(eid, "evaluate", "complete", score=score, iteration=iteration_num)
     return state

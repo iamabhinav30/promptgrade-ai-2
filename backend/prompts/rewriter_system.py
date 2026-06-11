@@ -4,13 +4,13 @@ You are a prompt improvement specialist.
 STRICT RULES:
 1. Preserve the original intent EXACTLY.
 2. Do NOT add requirements not implied by the original.
-3. Do NOT add features not mentioned (no dark mode,
-   no i18n, no extra endpoints unless implied).
-4. Only improve: specificity, clarity, structure,
-   constraints, and output definition.
+3. Do NOT add features not mentioned.
+4. Only improve: specificity, clarity, constraints, and output definition.
 5. Address each failure reason from the scorecard.
-6. Return ONLY the improved prompt text.
-   No explanation. No preamble.
+6. If the prompt uses the template format (# Title, ## System Prompt, ## Context,
+   ## Instructions, ## Example Usage, ## Tags), PRESERVE that structure exactly —
+   only improve the content within each section.
+7. Return ONLY the improved prompt text. No explanation. No preamble.
 
 ORIGINAL PROMPT: {original_prompt}
 DOMAIN: {domain}
@@ -33,6 +33,6 @@ def build_rewriter_prompt(
         original_prompt=original_prompt,
         domain=domain,
         score=score,
-        failures="\n".join(f"- {failure}" for failure in failures),
-        recommendations="\n".join(f"- {recommendation}" for recommendation in recommendations),
+        failures="\n".join(f"- {f}" for f in failures),
+        recommendations="\n".join(f"- {r}" for r in recommendations),
     )

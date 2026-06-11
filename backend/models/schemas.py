@@ -38,6 +38,7 @@ class Iteration(BaseModel):
 class EvaluationResult(BaseModel):
     evaluationId: str
     originalPrompt: str
+    structuredPrompt: str
     finalPrompt: str
     domain: Domain
     originalScore: float = Field(ge=0.0, le=1.0)

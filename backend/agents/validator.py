@@ -1,7 +1,11 @@
+import progress
 from graph.state import GraphState
 
 
 def validator_node(state: GraphState) -> GraphState:
+    eid = state.get("evaluation_id", "")
+    progress.emit(eid, "validate", "running")
+
     iterations = state.get("iterations", [])
     if iterations:
         best_iteration = max(iterations, key=lambda item: float(item.get("score", 0)))
@@ -12,7 +16,8 @@ def validator_node(state: GraphState) -> GraphState:
         best_score = 0.0
 
     original_score = float(iterations[0]["score"]) if iterations else 0.0
-    improvement_pct = 0.0 if original_score == 0 else round(((best_score - original_score) / original_score) * 100, 2)
+    raw_pct = 0.0 if original_score == 0 else ((best_score - original_score) / original_score) * 100
+    improvement_pct = round(min(max(raw_pct, 0.0), 100.0), 2)
 
     original_words = set(state.get("original_prompt", "").lower().split())
     final_words = set(final_prompt.lower().split())
@@ -24,4 +29,6 @@ def validator_node(state: GraphState) -> GraphState:
         "added": sorted(list(final_words - original_words)),
         "removed": sorted(list(original_words - final_words)),
     }
+
+    progress.emit(eid, "validate", "complete")
     return state

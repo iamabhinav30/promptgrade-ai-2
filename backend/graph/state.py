@@ -6,6 +6,7 @@ class GraphState(TypedDict):
     original_prompt: str
     domain: str
     current_prompt: str
+    structured_prompt: str
     retries: int
     best_score: float
     score: float

@@ -24,6 +24,7 @@ export interface Iteration {
 export interface EvaluationResult {
   evaluationId: string;
   originalPrompt: string;
+  structuredPrompt: string;
   finalPrompt: string;
   domain: Domain;
   originalScore: number;
