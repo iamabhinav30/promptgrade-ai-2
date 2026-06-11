@@ -10,7 +10,8 @@ load_dotenv()
 
 
 def _rewrite(system_prompt: str, current_prompt: str) -> str:
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), api_base=os.getenv("OPENAI_API_BASE"))
+    base_url = os.getenv("OPENAI_API_BASE") or None
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=base_url)
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         messages=[

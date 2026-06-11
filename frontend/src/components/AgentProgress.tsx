@@ -1,48 +1,84 @@
 import type { AgentProgressEvent } from "../types";
 
-interface AgentProgressProps {
-  events: AgentProgressEvent[];
-  isLoading: boolean;
-}
+const STEPS = [
+  { key: "intake",   label: "Intake",   desc: "Validating" },
+  { key: "evaluate", label: "Evaluate", desc: "Scoring" },
+  { key: "rewrite",  label: "Rewrite",  desc: "Improving" },
+  { key: "validate", label: "Validate", desc: "Checking" },
+  { key: "report",   label: "Report",   desc: "Saving" },
+];
 
-const steps = ["intake", "evaluate", "rewrite", "validate", "report"];
-
-function statusFor(step: string, events: AgentProgressEvent[], isLoading: boolean) {
-  const event = [...events].reverse().find((item) => item.agent.toLowerCase() === step);
-  if (event) return event.status;
-  if (isLoading && step === "intake" && events.length === 0) return "running";
+function getStatus(key: string, events: AgentProgressEvent[]): "pending" | "running" | "complete" {
+  const m = events.filter((e) => e.agent === key);
+  if (m.some((e) => e.status === "complete")) return "complete";
+  if (m.some((e) => e.status === "running"))  return "running";
   return "pending";
 }
 
-export default function AgentProgress({ events, isLoading }: AgentProgressProps) {
+export default function AgentProgress({ events, isLoading }: { events: AgentProgressEvent[]; isLoading: boolean }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-xl font-bold text-slate-900">Agent Progress</h2>
-      <div className="space-y-4">
-        {steps.map((step) => {
-          const status = statusFor(step, events, isLoading);
-          const latest = [...events].reverse().find((item) => item.agent.toLowerCase() === step);
+    <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+      <div className="mb-5 flex items-center justify-between">
+        <p className="text-sm font-semibold text-white">Pipeline Running</p>
+        {isLoading && (
+          <span className="flex items-center gap-1.5 text-xs text-violet-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
+            Processing…
+          </span>
+        )}
+      </div>
+      <div className="flex items-start">
+        {STEPS.map((step, idx) => {
+          const status     = getStatus(step.key, events);
+          const isLast     = idx === STEPS.length - 1;
+          const ev         = events.find((e) => e.agent === step.key && e.status === "complete");
+          const nextStatus = idx < STEPS.length - 1 ? getStatus(STEPS[idx + 1].key, events) : "pending";
+
           return (
-            <div key={step} className="flex items-center gap-3">
-              {status === "complete" ? (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">✓</span>
-              ) : status === "running" ? (
-                <span className="h-7 w-7 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-              ) : (
-                <span className="h-7 w-7 rounded-full bg-slate-200" />
-              )}
-              <div className="flex-1">
-                <div className="font-semibold capitalize text-slate-800">{step}</div>
-                <div className="text-sm text-slate-500">
-                  {status}
-                  {typeof latest?.score === "number" ? ` · score ${latest.score.toFixed(2)}` : ""}
-                  {typeof latest?.iteration === "number" ? ` · iteration ${latest.iteration}` : ""}
+            <div key={step.key} className="flex flex-1 flex-col items-center">
+              <div className="flex w-full items-center">
+                {idx > 0 && (
+                  <div className={`h-px flex-1 transition-colors duration-500 ${status !== "pending" ? "bg-violet-600" : "bg-white/[0.06]"}`} />
+                )}
+                <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-all duration-300 ${
+                  status === "complete" ? "bg-violet-600 shadow-md shadow-violet-900/50"
+                  : status === "running"  ? "border border-violet-500/50 bg-violet-500/10"
+                  : "border border-white/[0.08] bg-white/[0.02]"
+                }`}>
+                  {status === "complete" ? (
+                    <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : status === "running" ? (
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-[1.5px] border-violet-400 border-t-transparent" />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-gray-700">{idx + 1}</span>
+                  )}
                 </div>
+                {!isLast && (
+                  <div className={`h-px flex-1 transition-colors duration-500 ${nextStatus !== "pending" ? "bg-violet-600" : "bg-white/[0.06]"}`} />
+                )}
+              </div>
+              <div className="mt-2.5 text-center">
+                <p className={`text-xs font-semibold ${
+                  status === "complete" ? "text-violet-400"
+                  : status === "running"  ? "text-white"
+                  : "text-gray-600"
+                }`}>{step.label}</p>
+                {status === "running" && (
+                  <p className="text-[10px] text-gray-600 mt-0.5">{step.desc}</p>
+                )}
+                {ev?.score != null && (
+                  <p className="text-[10px] font-bold text-violet-400 mt-0.5 tabular-nums">{ev.score.toFixed(2)}</p>
+                )}
+                {ev?.improvementPct != null && (
+                  <p className="text-[10px] font-bold text-emerald-400 mt-0.5 tabular-nums">+{ev.improvementPct.toFixed(1)}%</p>
+                )}
               </div>
             </div>
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }

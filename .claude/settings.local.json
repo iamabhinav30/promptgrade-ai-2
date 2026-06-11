@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -9 -f \"uvicorn main\")",
+      "Bash(curl -s http://localhost:8000/health)",
+      "Bash(curl -s -I http://localhost:5173)",
+      "Bash(curl -s -X POST http://localhost:8000/api/evaluate -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:8000/api/analytics)",
+      "Bash(curl -s http://localhost:8000/api/evaluations)",
+      "Bash(curl -s -X POST http://localhost:8000/api/evaluate -H 'Content-Type: application/json' -d '{\"prompt\":\"Write a React component that displays user data in a table with sorting and filtering\",\"domain\":\"frontend\"}')",
+      "Bash(lsof -ti:8000)",
+      "Bash(lsof -ti:5173)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(kill -9 24880)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173)",
+      "Read(//private/tmp/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(brew list *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(curl -s -X POST http://localhost:8000/api/evaluate -H 'Content-Type: application/json' -d '{\"prompt\": \"Write a button component\", \"domain\": \"frontend\"}')",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

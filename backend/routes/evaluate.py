@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request
@@ -66,7 +67,7 @@ async def evaluate_prompt(request_body: EvaluationRequest):
         final_state = await asyncio.to_thread(promptgrade_graph.invoke, initial_state)
         result = _state_to_result(final_state)
         # report_node writes createdAt to DB; use the DB-returned datetime if available in the latest state is not stored.
-        result["createdAt"] = __import__("datetime").datetime.datetime.utcnow().isoformat() + "Z"
+        result["createdAt"] = datetime.now(timezone.utc).isoformat()
         validated = EvaluationResult.model_validate(result)
         await publish_event(validated.evaluationId, AgentProgressEvent(agent="report", status="complete", improvementPct=validated.improvementPct))
         await progress_queues.setdefault(validated.evaluationId, asyncio.Queue()).put({"status": "done"})

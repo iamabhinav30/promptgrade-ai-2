@@ -27,7 +27,8 @@ def _load_rubric(domain: str) -> list[str]:
 
 
 def _call_llm(system_prompt: str, user_prompt: str) -> dict[str, Any]:
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), api_base=os.getenv("OPENAI_API_BASE"))
+    base_url = os.getenv("OPENAI_API_BASE") or None
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), base_url=base_url)
     response = client.chat.completions.create(
         model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
         response_format={"type": "json_object"},
@@ -36,9 +37,15 @@ def _call_llm(system_prompt: str, user_prompt: str) -> dict[str, Any]:
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.0,
+        max_tokens=1000,
     )
     content = response.choices[0].message.content or "{}"
-    return json.loads(content)
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError as e:
+        print(f"JSON Parse Error: {e}")
+        print(f"Content: {content}")
+        raise ValueError(f"LLM response is not valid JSON: {str(e)}")
 
 
 def _validate_response(payload: dict[str, Any]) -> dict[str, Any]:
