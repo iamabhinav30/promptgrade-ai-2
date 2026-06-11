@@ -39,80 +39,74 @@ const CURRENT: { icon: string; title: string; desc: string; tags: string[] }[] =
 
 type Status = "in-progress" | "planned" | "idea";
 
-const ROADMAP: {
-  icon: string;
-  title: string;
-  desc: string;
-  status: Status;
-  tags: string[];
-}[] = [
+const ROADMAP: { icon: string; title: string; desc: string; status: Status; tags: string[] }[] = [
   {
     icon: "🧩",
     title: "VS Code Extension",
-    desc: "Evaluate prompts inline as you write them. A sidebar shows the live quality score, dimension breakdown, and one-click rewrite — without leaving the editor. Zero context switching for developers.",
+    desc: "Evaluate prompts inline as you write them. A sidebar shows the live quality score, dimension breakdown, and one-click rewrite — without leaving the editor.",
     status: "in-progress",
     tags: ["VS Code", "Real-time", "Extension"],
   },
   {
     icon: "🔗",
     title: "Bitbucket MCP Integration",
-    desc: "Connect PromptGrade to Bitbucket via Model Context Protocol. Auto-evaluate prompt files in pull requests, post inline comments with quality scores, and block merges below the threshold — like a Sonar quality gate for prompts.",
+    desc: "Connect PromptGrade to Bitbucket via Model Context Protocol. Auto-evaluate prompt files in pull requests, post inline comments, and block merges below threshold.",
     status: "planned",
     tags: ["Bitbucket", "MCP", "PR comments", "Quality gate"],
   },
   {
     icon: "🐙",
     title: "GitHub MCP Integration",
-    desc: "Same governance workflow for GitHub repos. A GitHub Action triggers the pipeline on any .md file change, posts scores as PR checks, and fails the build if quality drops.",
+    desc: "Same governance workflow for GitHub repos. A GitHub Action triggers the pipeline on any .md file change and posts scores as PR checks.",
     status: "planned",
     tags: ["GitHub", "MCP", "CI/CD", "Actions"],
   },
   {
     icon: "🔧",
     title: "JetBrains Plugin",
-    desc: "Real-time prompt evaluation inside IntelliJ IDEA, WebStorm, and PyCharm. Developers on Java/Kotlin/Python stacks get the same in-editor experience as VS Code users.",
+    desc: "Real-time prompt evaluation inside IntelliJ IDEA, WebStorm, and PyCharm. Developers on Java/Kotlin/Python stacks get the same in-editor experience.",
     status: "planned",
     tags: ["JetBrains", "IntelliJ", "Plugin"],
   },
   {
     icon: "📚",
     title: "Org Prompt Library",
-    desc: "A shared, searchable repository of approved high-scoring prompts. Teams can browse, fork, and build on prompts that already meet governance standards — reducing duplicated work.",
+    desc: "A shared, searchable repository of approved high-scoring prompts. Teams can browse, fork, and build on prompts that already meet governance standards.",
     status: "planned",
     tags: ["Library", "Reuse", "Discovery"],
   },
   {
     icon: "🚦",
     title: "CI/CD Quality Gates",
-    desc: "Enforce minimum prompt quality scores in your pipeline. A pipeline stage evaluates every prompt file commit — if the score drops below the configured threshold, the build fails with a detailed report.",
+    desc: "Enforce minimum prompt quality scores in your pipeline. A pipeline stage evaluates every prompt file commit — if the score drops below threshold, the build fails.",
     status: "planned",
     tags: ["CI/CD", "Quality gate", "Pipeline"],
   },
   {
     icon: "🤖",
     title: "Multi-LLM Provider Support",
-    desc: "Evaluate prompts against Claude, Gemini, Llama, and Mistral — not just OpenAI models. Scores reflect performance across the LLMs your org actually uses in production.",
+    desc: "Evaluate prompts against Claude, Gemini, Llama, and Mistral. Scores reflect performance across the LLMs your org actually uses in production.",
     status: "idea",
     tags: ["Claude", "Gemini", "Llama", "Multi-model"],
   },
   {
     icon: "📊",
     title: "Per-Developer Analytics",
-    desc: "Break down quality metrics by developer, team, and squad. Track improvement over time, surface coaching opportunities, and celebrate teams consistently shipping excellent prompts.",
+    desc: "Break down quality metrics by developer, team, and squad. Track improvement over time and surface coaching opportunities.",
     status: "idea",
     tags: ["Analytics", "Developer", "Trends"],
   },
   {
     icon: "🔔",
     title: "Slack / Teams Notifications",
-    desc: "Get notified when a prompt score drops below a threshold, when a batch evaluation completes, or when a team member achieves a new high score — keeping everyone informed without checking the dashboard.",
+    desc: "Get notified when a prompt score drops below a threshold, when a batch evaluation completes, or when a team member achieves a new high score.",
     status: "idea",
     tags: ["Slack", "Teams", "Notifications"],
   },
   {
     icon: "📝",
     title: "Custom Rubric Definitions",
-    desc: "Teams can define their own scoring dimensions on top of the standard 6. A mobile team might add an 'accessibility' dimension; a security team might add an 'injection risk' check.",
+    desc: "Teams can define their own scoring dimensions on top of the standard 6. A mobile team might add an 'accessibility' dimension; security teams an 'injection risk' check.",
     status: "idea",
     tags: ["Custom rubrics", "Extensible", "Domain"],
   },
@@ -142,7 +136,7 @@ export default function Plans() {
         </p>
       </div>
 
-      {/* What's live today */}
+      {/* Live today */}
       <div>
         <div className="mb-5 flex items-center gap-3">
           <h2 className="text-base font-semibold text-white">Live Today</h2>
@@ -153,21 +147,17 @@ export default function Plans() {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {CURRENT.map((item) => (
-            <div key={item.title} className="rounded-xl border border-white/[0.06] bg-[#13131a] p-5 flex flex-col gap-3">
+            <div key={item.title} className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-5 flex flex-col gap-3">
               <div className="flex items-start gap-3">
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 ring-1 ring-emerald-500/20 text-base">
                   {item.icon}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-white leading-snug">{item.title}</p>
-                </div>
+                <p className="text-sm font-semibold text-white leading-snug">{item.title}</p>
               </div>
               <p className="text-xs text-gray-400 leading-5">{item.desc}</p>
               <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
                 {item.tags.map(t => (
-                  <span key={t} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-gray-500">
-                    {t}
-                  </span>
+                  <span key={t} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-gray-500">{t}</span>
                 ))}
               </div>
             </div>
@@ -175,7 +165,7 @@ export default function Plans() {
         </div>
       </div>
 
-      {/* Roadmap */}
+      {/* Coming next */}
       <div>
         <div className="mb-5 flex flex-wrap items-center gap-4">
           <h2 className="text-base font-semibold text-white">Coming Next</h2>
@@ -196,7 +186,7 @@ export default function Plans() {
           {ROADMAP.map((item) => {
             const st = STATUS_STYLES[item.status];
             return (
-              <div key={item.title} className="rounded-xl border border-white/[0.06] bg-[#13131a] p-5 flex flex-col gap-3">
+              <div key={item.title} className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-5 flex flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white/[0.04] ring-1 ring-white/[0.06] text-base">
@@ -212,9 +202,7 @@ export default function Plans() {
                 <p className="text-xs text-gray-400 leading-5">{item.desc}</p>
                 <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
                   {item.tags.map(t => (
-                    <span key={t} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-gray-500">
-                      {t}
-                    </span>
+                    <span key={t} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[10px] text-gray-500">{t}</span>
                   ))}
                 </div>
               </div>
@@ -224,7 +212,7 @@ export default function Plans() {
       </div>
 
       {/* Vision strip */}
-      <div className="relative overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-600/10 via-[#13131a] to-[#13131a] p-8">
+      <div className="relative overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-600/10 via-[var(--pg-card)] to-[var(--pg-card)] p-8">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-violet-600/10 blur-3xl" />
         <div className="relative max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-3">The Vision</p>
@@ -234,8 +222,7 @@ export default function Plans() {
           <p className="mt-3 text-sm text-gray-400 leading-relaxed">
             Just as SonarQube runs silently in every PR and CI job, PromptGrade will eventually
             sit in every editor, every commit hook, and every pipeline stage — ensuring that no
-            low-quality AI prompt ever reaches production. The goal: make excellent prompt engineering
-            the path of least resistance for every developer in the org.
+            low-quality AI prompt ever reaches production.
           </p>
         </div>
       </div>

@@ -14,7 +14,7 @@ export default function DiffViewer({
   originalPrompt: string; finalPrompt: string; added: string[]; removed: string[]; improvementPct?: number;
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6 space-y-5">
+    <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-white">Before / After</h2>
@@ -33,7 +33,7 @@ export default function DiffViewer({
             <span className="h-2 w-2 rounded-full bg-red-500" />
             <p className="text-xs font-semibold text-red-400">Original</p>
           </div>
-          <div className="min-h-40 rounded-lg border border-white/[0.04] bg-[#0d0d12] p-4 font-mono text-xs leading-6 text-gray-300 whitespace-pre-wrap overflow-auto">
+          <div className="min-h-40 rounded-lg border border-white/[0.04] bg-[var(--pg-page)] p-4 font-mono text-xs leading-6 text-gray-300 whitespace-pre-wrap overflow-auto">
             {highlight(originalPrompt, removed, "rounded bg-red-500/20 text-red-300 px-0.5 not-italic")}
           </div>
         </div>
@@ -42,7 +42,7 @@ export default function DiffViewer({
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <p className="text-xs font-semibold text-emerald-400">Improved</p>
           </div>
-          <div className="min-h-40 rounded-lg border border-white/[0.04] bg-[#0d0d12] p-4 font-mono text-xs leading-6 text-gray-300 whitespace-pre-wrap overflow-auto">
+          <div className="min-h-40 rounded-lg border border-white/[0.04] bg-[var(--pg-page)] p-4 font-mono text-xs leading-6 text-gray-300 whitespace-pre-wrap overflow-auto">
             {highlight(finalPrompt, added, "rounded bg-emerald-500/20 text-emerald-300 px-0.5 not-italic")}
           </div>
         </div>

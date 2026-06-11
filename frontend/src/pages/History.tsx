@@ -21,11 +21,11 @@ function ScorePill({ score }: { score: number }) {
 const LIMIT = 20;
 
 export default function History() {
-  const [domain, setDomain]     = useState<Domain | "">("");
-  const [page, setPage]         = useState(0);
-  const [rows, setRows]         = useState<EvaluationResult[]>([]);
-  const [total, setTotal]       = useState(0);
-  const [selected, setSelected] = useState<EvaluationResult | null>(null);
+  const [domain, setDomain]       = useState<Domain | "">("");
+  const [page, setPage]           = useState(0);
+  const [rows, setRows]           = useState<EvaluationResult[]>([]);
+  const [total, setTotal]         = useState(0);
+  const [selected, setSelected]   = useState<EvaluationResult | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,11 +37,8 @@ export default function History() {
 
   async function openRow(id: string) {
     setLoadingId(id);
-    try {
-      setSelected(await getEvaluation(id));
-    } finally {
-      setLoadingId(null);
-    }
+    try { setSelected(await getEvaluation(id)); }
+    finally { setLoadingId(null); }
   }
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
@@ -54,25 +51,23 @@ export default function History() {
           <h1 className="text-xl font-semibold text-white">History</h1>
           <p className="mt-0.5 text-sm text-gray-500">{total} evaluations recorded</p>
         </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={domain}
-            onChange={(e) => { setDomain(e.target.value as Domain | ""); setPage(0); }}
-            className="rounded-lg border border-white/[0.06] bg-[#13131a] px-3 py-2 text-sm text-gray-300 focus:border-violet-500/50 focus:outline-none cursor-pointer"
-          >
-            <option value="">All domains</option>
-            <option value="frontend">Frontend</option>
-            <option value="backend">Backend</option>
-            <option value="devops">DevOps</option>
-            <option value="testing">Testing</option>
-            <option value="database">Database</option>
-            <option value="system_design">System Design</option>
-          </select>
-        </div>
+        <select
+          value={domain}
+          onChange={(e) => { setDomain(e.target.value as Domain | ""); setPage(0); }}
+          className="rounded-lg border border-white/[0.06] bg-[var(--pg-card)] px-3 py-2 text-sm text-gray-300 focus:border-violet-500/50 focus:outline-none cursor-pointer"
+        >
+          <option value="">All domains</option>
+          <option value="frontend">Frontend</option>
+          <option value="backend">Backend</option>
+          <option value="devops">DevOps</option>
+          <option value="testing">Testing</option>
+          <option value="database">Database</option>
+          <option value="system_design">System Design</option>
+        </select>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#13131a]">
+      <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--pg-card)]">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/[0.06]">
@@ -111,18 +106,12 @@ export default function History() {
                   {row.originalPrompt}
                 </td>
                 <td className="px-5 py-3.5 text-right text-xs tabular-nums text-gray-600">{row.originalScore.toFixed(2)}</td>
-                <td className="px-5 py-3.5 text-right">
-                  <ScorePill score={row.finalScore} />
-                </td>
-                <td className="px-5 py-3.5 text-right text-xs font-semibold tabular-nums text-emerald-400">
-                  +{row.improvementPct.toFixed(1)}%
-                </td>
+                <td className="px-5 py-3.5 text-right"><ScorePill score={row.finalScore} /></td>
+                <td className="px-5 py-3.5 text-right text-xs font-semibold tabular-nums text-emerald-400">+{row.improvementPct.toFixed(1)}%</td>
                 <td className="px-5 py-3.5 text-right text-xs text-gray-600">
                   {loadingId === row.evaluationId ? (
                     <span className="inline-block h-3 w-3 animate-spin rounded-full border border-violet-500 border-t-transparent" />
-                  ) : (
-                    row.iterationCount
-                  )}
+                  ) : row.iterationCount}
                 </td>
               </tr>
             ))}
@@ -132,20 +121,14 @@ export default function History() {
         {/* Pagination */}
         <div className="flex items-center justify-between border-t border-white/[0.06] px-5 py-3">
           <button
-            onClick={() => setPage((p) => p - 1)}
-            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)} disabled={page === 0}
             className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-white/[0.06] hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            ← Prev
-          </button>
+          >← Prev</button>
           <span className="text-xs text-gray-600">Page {page + 1} of {totalPages}</span>
           <button
-            onClick={() => setPage((p) => p + 1)}
-            disabled={(page + 1) * LIMIT >= total}
+            onClick={() => setPage((p) => p + 1)} disabled={(page + 1) * LIMIT >= total}
             className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-white/[0.06] hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            Next →
-          </button>
+          >Next →</button>
         </div>
       </div>
 
@@ -156,7 +139,7 @@ export default function History() {
           onClick={() => setSelected(null)}
         >
           <div
-            className="w-full max-w-3xl space-y-5 rounded-xl border border-white/[0.08] bg-[#0f0f16] p-6 shadow-2xl"
+            className="w-full max-w-3xl space-y-5 rounded-xl border border-white/[0.08] bg-[var(--pg-modal)] p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -167,9 +150,7 @@ export default function History() {
               <button
                 onClick={() => setSelected(null)}
                 className="rounded-lg border border-white/[0.06] px-3 py-1.5 text-xs text-gray-400 hover:bg-white/[0.05] hover:text-gray-200 transition-colors"
-              >
-                ✕ Close
-              </button>
+              >✕ Close</button>
             </div>
             <ScoreCard result={selected} />
             <DiffViewer

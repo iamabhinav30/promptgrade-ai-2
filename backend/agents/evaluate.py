@@ -64,6 +64,15 @@ def _validate_response(payload: dict[str, Any]) -> dict[str, Any]:
     if found != set(DIMENSION_NAMES):
         raise ValueError("LLM response dimensions are incomplete or invalid.")
 
+    _default_failures = {
+        "clarity":             "Intent or scope is unclear or ambiguous",
+        "completeness":        "Key requirements or inputs are missing",
+        "context":             "Target environment or use case not specified",
+        "constraints":         "No constraints, boundaries, or limits defined",
+        "output_definition":   "Expected output format or success criteria missing",
+        "production_readiness":"Too vague or abstract for direct production use",
+    }
+
     clean_dimensions = []
     for dimension in dimensions:
         dim_score = float(dimension.get("score"))
@@ -72,6 +81,8 @@ def _validate_response(payload: dict[str, Any]) -> dict[str, Any]:
         failure_reason = dimension.get("failureReason")
         if failure_reason:
             failure_reason = str(failure_reason)[:100]
+        elif dim_score < 0.8:
+            failure_reason = _default_failures.get(dimension["name"], "Needs improvement")
         clean_dimensions.append(
             {
                 "name": dimension["name"],

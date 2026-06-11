@@ -18,7 +18,7 @@ function getStatus(key: string, events: AgentProgressEvent[]): "pending" | "runn
 
 export default function AgentProgress({ events, isLoading }: { events: AgentProgressEvent[]; isLoading: boolean }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+    <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
       <div className="mb-5 flex items-center justify-between">
         <p className="text-sm font-semibold text-white">Pipeline Running</p>
         {isLoading && (
@@ -47,7 +47,7 @@ export default function AgentProgress({ events, isLoading }: { events: AgentProg
                   : "border border-white/[0.08] bg-white/[0.02]"
                 }`}>
                   {status === "complete" ? (
-                    <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <svg className="h-3.5 w-3.5 !text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   ) : status === "running" ? (
@@ -66,15 +66,9 @@ export default function AgentProgress({ events, isLoading }: { events: AgentProg
                   : status === "running"  ? "text-white"
                   : "text-gray-600"
                 }`}>{step.label}</p>
-                {status === "running" && (
-                  <p className="text-[10px] text-gray-600 mt-0.5">{step.desc}</p>
-                )}
-                {ev?.score != null && (
-                  <p className="text-[10px] font-bold text-violet-400 mt-0.5 tabular-nums">{ev.score.toFixed(2)}</p>
-                )}
-                {ev?.improvementPct != null && (
-                  <p className="text-[10px] font-bold text-emerald-400 mt-0.5 tabular-nums">+{ev.improvementPct.toFixed(1)}%</p>
-                )}
+                {status === "running" && <p className="text-[10px] text-gray-600 mt-0.5">{step.desc}</p>}
+                {ev?.score != null && <p className="text-[10px] font-bold text-violet-400 mt-0.5 tabular-nums">{ev.score.toFixed(2)}</p>}
+                {ev?.improvementPct != null && <p className="text-[10px] font-bold text-emerald-400 mt-0.5 tabular-nums">+{ev.improvementPct.toFixed(1)}%</p>}
               </div>
             </div>
           );

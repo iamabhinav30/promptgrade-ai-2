@@ -34,22 +34,19 @@ export default function Leaderboard() {
 
   return (
     <div className="space-y-7">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-semibold text-white">Leaderboard</h1>
         <p className="mt-0.5 text-sm text-gray-500">Top performers ranked by average prompt quality score</p>
       </div>
 
-      {/* Empty state */}
       {analytics.governanceLeaderboard.length === 0 && (
-        <div className="rounded-xl border border-white/[0.06] bg-[#13131a] px-6 py-16 text-center">
+        <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] px-6 py-16 text-center">
           <p className="text-3xl mb-3">🏁</p>
           <p className="text-sm font-medium text-gray-400">No leaderboard data yet</p>
           <p className="mt-1 text-xs text-gray-600">Run evaluations to populate rankings</p>
         </div>
       )}
 
-      {/* Top 3 podium */}
       {top3.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-3">
           {top3.map((row, i) => {
@@ -75,9 +72,8 @@ export default function Leaderboard() {
         </div>
       )}
 
-      {/* Remaining participants */}
       {rest.length > 0 && (
-        <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[#13131a]">
+        <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--pg-card)]">
           <div className="border-b border-white/[0.06] px-5 py-3.5">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">Other Participants</h2>
           </div>

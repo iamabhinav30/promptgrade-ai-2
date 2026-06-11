@@ -18,47 +18,34 @@ function highlightPlaceholders(text: string) {
 }
 
 function renderLine(line: string, i: number) {
-  // H1 title
   if (/^# /.test(line)) {
-    return (
-      <div key={i} className="mb-1">
-        <p className="text-base font-bold text-white">{line.replace(/^# /, "")}</p>
-      </div>
-    );
+    return <div key={i} className="mb-1"><p className="text-base font-bold text-white">{line.replace(/^# /, "")}</p></div>;
   }
-  // Metadata line (Channel: ... | Scope: ... | Topic: ...)
   if (/^Channel:/i.test(line)) {
     const parts = line.split("|").map(s => s.trim());
     return (
       <div key={i} className="mb-4 flex flex-wrap gap-2">
         {parts.map((p, j) => (
-          <span key={j} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-gray-400">
-            {p}
-          </span>
+          <span key={j} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] text-gray-400">{p}</span>
         ))}
       </div>
     );
   }
-  // H2 section headers
   if (/^## /.test(line)) {
-    const title = line.replace(/^## /, "").toLowerCase();
+    const title  = line.replace(/^## /, "").toLowerCase();
     const colors = SECTION_COLORS[title] ?? { border: "border-white/10", label: "text-gray-300", dot: "bg-gray-500" };
     return (
       <div key={i} className={`mt-5 mb-2 flex items-center gap-2 border-b pb-1.5 ${colors.border}`}>
         <span className={`h-1.5 w-1.5 rounded-full ${colors.dot}`} />
-        <span className={`text-xs font-bold uppercase tracking-widest ${colors.label}`}>
-          {line.replace(/^## /, "")}
-        </span>
+        <span className={`text-xs font-bold uppercase tracking-widest ${colors.label}`}>{line.replace(/^## /, "")}</span>
       </div>
     );
   }
-  // Numbered instruction
   if (/^\d+\.\s/.test(line)) {
     const [num, ...rest] = line.split(/\.\s(.+)/);
     const text = rest.join("");
-    // Bold **key**: rest
     const boldified = text.replace(/\*\*([^*]+)\*\*/g, "|||BOLD|||$1|||/BOLD|||");
-    const segments = boldified.split(/(|||BOLD|||[^|]+|||\/BOLD\|||)/g);
+    const segments  = boldified.split(/(|||BOLD|||[^|]+|||\/BOLD\|||)/g);
     return (
       <div key={i} className="flex gap-2 py-0.5">
         <span className="flex-shrink-0 text-xs font-bold tabular-nums text-gray-600">{num}.</span>
@@ -74,7 +61,6 @@ function renderLine(line: string, i: number) {
       </div>
     );
   }
-  // Bullet / dash list
   if (/^[-*]\s/.test(line) || /^  [-*]\s/.test(line)) {
     const indent = line.startsWith("  ") ? "ml-4" : "";
     return (
@@ -84,32 +70,23 @@ function renderLine(line: string, i: number) {
       </div>
     );
   }
-  // Tags line (space-separated lowercase words at end)
   if (/^[a-z][-a-z0-9 ]+$/.test(line.trim()) && !line.includes(":")) {
     return (
       <div key={i} className="mt-1 flex flex-wrap gap-1.5">
         {line.trim().split(/\s+/).map((tag, j) => (
-          <span key={j} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[11px] text-gray-500">
-            #{tag}
-          </span>
+          <span key={j} className="rounded-full border border-white/[0.06] bg-white/[0.03] px-2 py-0.5 text-[11px] text-gray-500">#{tag}</span>
         ))}
       </div>
     );
   }
-  // Empty line → small spacer
   if (line.trim() === "") return <div key={i} className="h-1" />;
-  // Default
-  return (
-    <p key={i} className="text-xs text-gray-300 leading-5 py-0.5">
-      {highlightPlaceholders(line)}
-    </p>
-  );
+  return <p key={i} className="text-xs text-gray-300 leading-5 py-0.5">{highlightPlaceholders(line)}</p>;
 }
 
 export default function StructuredPromptViewer({ content }: Props) {
   const lines = content.split("\n");
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+    <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-white">Structured Prompt</h2>
@@ -122,7 +99,7 @@ export default function StructuredPromptViewer({ content }: Props) {
           Copy
         </button>
       </div>
-      <div className="rounded-lg border border-white/[0.04] bg-[#0d0d12] p-5">
+      <div className="rounded-lg border border-white/[0.04] bg-[var(--pg-page)] p-5">
         {lines.map((line, i) => renderLine(line, i))}
       </div>
     </div>

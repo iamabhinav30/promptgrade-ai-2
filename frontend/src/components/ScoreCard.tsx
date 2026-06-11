@@ -11,7 +11,7 @@ export default function ScoreCard({ result }: { result: EvaluationResult }) {
   const failures = dims.filter((d) => d.failureReason);
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6 space-y-6">
+    <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -46,14 +46,9 @@ export default function ScoreCard({ result }: { result: EvaluationResult }) {
                 <span className={`text-xs font-bold tabular-nums ${text}`}>{(d.score * 100).toFixed(0)}%</span>
               </div>
               <div className="h-1.5 w-full rounded-full bg-white/[0.05]">
-                <div
-                  className={`h-1.5 rounded-full ${bar} transition-all duration-700`}
-                  style={{ width: `${d.score * 100}%` }}
-                />
+                <div className={`h-1.5 rounded-full ${bar} transition-all duration-700`} style={{ width: `${d.score * 100}%` }} />
               </div>
-              {d.failureReason && (
-                <p className="mt-1 text-[11px] text-red-400">{d.failureReason}</p>
-              )}
+              {d.failureReason && <p className="mt-1 text-[11px] text-red-400">{d.failureReason}</p>}
             </div>
           );
         })}

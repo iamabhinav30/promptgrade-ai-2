@@ -1,3 +1,5 @@
+import { useTheme } from "../context/ThemeContext";
+
 interface ScoreGaugeProps { score: number; label: string; }
 
 function scoreColor(s: number) {
@@ -7,16 +9,18 @@ function scoreColor(s: number) {
 }
 
 export default function ScoreGauge({ score, label }: ScoreGaugeProps) {
+  const { theme }                    = useTheme();
   const { stroke, text, status, badge } = scoreColor(score);
+  const trackColor                   = theme === "dark" ? "#1a1a24" : "#e5e7eb";
   const pct   = Math.max(0, Math.min(score, 1));
   const total = 220;
   const dash  = pct * total;
 
   return (
-    <div className="flex flex-col items-center rounded-xl border border-white/[0.06] bg-[#13131a] px-6 py-7">
+    <div className="flex flex-col items-center rounded-xl border border-white/[0.06] bg-[var(--pg-card)] px-6 py-7">
       <div className="relative h-28 w-52">
         <svg viewBox="0 0 260 145" className="w-full h-full overflow-visible">
-          <path d="M30 130 A100 100 0 0 1 230 130" fill="none" strokeWidth={14} stroke="#1a1a24" strokeLinecap="round" />
+          <path d="M30 130 A100 100 0 0 1 230 130" fill="none" strokeWidth={14} stroke={trackColor} strokeLinecap="round" />
           <path
             d="M30 130 A100 100 0 0 1 230 130"
             fill="none"
@@ -24,10 +28,7 @@ export default function ScoreGauge({ score, label }: ScoreGaugeProps) {
             stroke={stroke}
             strokeLinecap="round"
             strokeDasharray={`${dash} ${total}`}
-            style={{
-              transition: "stroke-dasharray 0.7s cubic-bezier(0.4,0,0.2,1)",
-              filter: `drop-shadow(0 0 8px ${stroke}66)`,
-            }}
+            style={{ transition: "stroke-dasharray 0.7s cubic-bezier(0.4,0,0.2,1)", filter: `drop-shadow(0 0 8px ${stroke}66)` }}
           />
         </svg>
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">

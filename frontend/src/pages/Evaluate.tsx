@@ -61,53 +61,40 @@ function ScorePill({ score }: { score: number }) {
 }
 
 export default function Evaluate() {
-  const [tab, setTab]           = useState<Tab>("text");
-  const [prompt, setPrompt]     = useState("");
-  const [domain, setDomain]     = useState<Domain>("frontend");
-  const [file, setFile]         = useState<File | null>(null);
+  const [tab, setTab]               = useState<Tab>("text");
+  const [prompt, setPrompt]         = useState("");
+  const [domain, setDomain]         = useState<Domain>("frontend");
+  const [file, setFile]             = useState<File | null>(null);
   const [batchFiles, setBatchFiles] = useState<File[]>([]);
   const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
-  const [loading, setLoading]   = useState(false);
-  const [events, setEvents]     = useState<AgentProgressEvent[]>([]);
-  const [result, setResult]     = useState<EvaluationResult | null>(null);
-  const [error, setError]       = useState("");
-  const fileRef                 = useRef<HTMLInputElement>(null);
-  const batchRef                = useRef<HTMLInputElement>(null);
+  const [loading, setLoading]       = useState(false);
+  const [events, setEvents]         = useState<AgentProgressEvent[]>([]);
+  const [result, setResult]         = useState<EvaluationResult | null>(null);
+  const [error, setError]           = useState("");
+  const fileRef                     = useRef<HTMLInputElement>(null);
+  const batchRef                    = useRef<HTMLInputElement>(null);
 
   function mergeEvent(ev: AgentProgressEvent) {
     setEvents(prev => {
       const idx = prev.findIndex(e => e.agent === ev.agent);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = ev;
-        return next;
-      }
+      if (idx >= 0) { const next = [...prev]; next[idx] = ev; return next; }
       return [...prev, ev];
     });
   }
 
   async function run() {
-    setError("");
-    setResult(null);
-    setBatchItems([]);
+    setError(""); setResult(null); setBatchItems([]);
     setLoading(true);
     setEvents([{ agent: "intake", status: "running" }]);
-
     try {
-      if (tab === "batch") {
-        await runBatch();
-        return;
-      }
-
+      if (tab === "batch") { await runBatch(); return; }
       const data = tab === "file" && file
         ? await evaluateFileStream(file, domain, mergeEvent)
         : await evaluatePromptStream(prompt, domain, mergeEvent);
-
       setEvents(completeEvents(data));
       setResult(data);
     } catch (e: unknown) {
-      const msg = (e as { message?: string })?.message || "Evaluation failed";
-      setError(msg);
+      setError((e as { message?: string })?.message || "Evaluation failed");
       setEvents([]);
     } finally {
       setLoading(false);
@@ -117,33 +104,12 @@ export default function Evaluate() {
   async function runBatch() {
     const items: BatchItem[] = batchFiles.map(f => ({ file: f, status: "queued" }));
     setBatchItems([...items]);
-
     await evaluateBatch(
-      batchFiles,
-      domain,
-      (i) => {
-        setBatchItems(prev => {
-          const next = [...prev];
-          next[i] = { ...next[i], status: "running" };
-          return next;
-        });
-      },
-      (i, res) => {
-        setBatchItems(prev => {
-          const next = [...prev];
-          next[i] = { ...next[i], status: "done", result: res };
-          return next;
-        });
-      },
-      (i, err) => {
-        setBatchItems(prev => {
-          const next = [...prev];
-          next[i] = { ...next[i], status: "error", error: err };
-          return next;
-        });
-      },
+      batchFiles, domain,
+      (i) => setBatchItems(prev => { const n = [...prev]; n[i] = { ...n[i], status: "running" }; return n; }),
+      (i, res) => setBatchItems(prev => { const n = [...prev]; n[i] = { ...n[i], status: "done", result: res }; return n; }),
+      (i, err) => setBatchItems(prev => { const n = [...prev]; n[i] = { ...n[i], status: "error", error: err }; return n; }),
     );
-
     setLoading(false);
   }
 
@@ -174,14 +140,13 @@ export default function Evaluate() {
 
   return (
     <div className="space-y-7">
-      {/* Page header */}
       <div>
         <h1 className="text-xl font-semibold text-white">Evaluate Prompt</h1>
         <p className="mt-0.5 text-sm text-gray-500">Score, structure, and auto-improve your AI prompts with a 6-agent pipeline</p>
       </div>
 
       {/* Input card */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6 space-y-6">
+      <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6 space-y-6">
 
         {/* Tabs */}
         <div className="flex items-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 w-fit">
@@ -190,9 +155,7 @@ export default function Evaluate() {
               key={t}
               onClick={() => { setTab(t); setError(""); }}
               className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all duration-150 ${
-                tab === t
-                  ? "bg-violet-600 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-300"
+                tab === t ? "bg-violet-600 !text-white shadow-sm" : "text-gray-500 hover:text-gray-300"
               }`}
             >
               {t === "text" ? "Paste Prompt" : t === "file" ? "Upload .md" : "Batch Files"}
@@ -225,10 +188,7 @@ export default function Evaluate() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">Prompt</label>
-              <button
-                onClick={() => setPrompt(EXAMPLES[domain])}
-                className="text-[11px] text-violet-500 hover:text-violet-400 transition-colors"
-              >
+              <button onClick={() => setPrompt(EXAMPLES[domain])} className="text-[11px] text-violet-500 hover:text-violet-400 transition-colors">
                 Use example →
               </button>
             </div>
@@ -239,7 +199,7 @@ export default function Evaluate() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder={`Paste your ${domain.replace("_", " ")} prompt here… (min 20 chars)`}
-                className="w-full resize-none rounded-lg border border-white/[0.06] bg-[#0d0d12] px-4 py-3 text-sm text-gray-200 placeholder-gray-700 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors leading-relaxed"
+                className="w-full resize-none rounded-lg border border-white/[0.06] bg-[var(--pg-page)] px-4 py-3 text-sm text-gray-200 placeholder-gray-700 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors leading-relaxed"
               />
               <span className={`absolute bottom-3 right-3 text-[11px] tabular-nums ${prompt.length > 7200 ? "text-amber-400" : "text-gray-700"}`}>
                 {prompt.length}/8000
@@ -260,21 +220,11 @@ export default function Evaluate() {
               onDragOver={(e) => e.preventDefault()}
               onClick={() => fileRef.current?.click()}
               className={`cursor-pointer rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${
-                file
-                  ? "border-violet-500/40 bg-violet-500/5"
-                  : "border-white/[0.08] hover:border-white/[0.15]"
+                file ? "border-violet-500/40 bg-violet-500/5" : "border-white/[0.08] hover:border-white/[0.15]"
               }`}
             >
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".md"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) { setFile(f); setError(""); }
-                }}
-              />
+              <input ref={fileRef} type="file" accept=".md" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setError(""); } }} />
               {file ? (
                 <div className="space-y-2">
                   <p className="text-2xl">📄</p>
@@ -303,22 +253,14 @@ export default function Evaluate() {
               onDragOver={(e) => e.preventDefault()}
               onClick={() => batchRef.current?.click()}
               className={`cursor-pointer rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${
-                batchFiles.length > 0
-                  ? "border-violet-500/40 bg-violet-500/5"
-                  : "border-white/[0.08] hover:border-white/[0.15]"
+                batchFiles.length > 0 ? "border-violet-500/40 bg-violet-500/5" : "border-white/[0.08] hover:border-white/[0.15]"
               }`}
             >
-              <input
-                ref={batchRef}
-                type="file"
-                accept=".md"
-                multiple
-                className="hidden"
+              <input ref={batchRef} type="file" accept=".md" multiple className="hidden"
                 onChange={(e) => {
                   const picked = Array.from(e.target.files ?? []).filter(f => f.name.endsWith(".md"));
                   if (picked.length) { setBatchFiles(picked); setError(""); }
-                }}
-              />
+                }} />
               {batchFiles.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-xl font-semibold text-violet-300">{batchFiles.length} file{batchFiles.length > 1 ? "s" : ""} selected</p>
@@ -341,7 +283,6 @@ export default function Evaluate() {
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3">
             <span className="flex-shrink-0 text-sm font-bold text-red-400">✕</span>
@@ -349,11 +290,10 @@ export default function Evaluate() {
           </div>
         )}
 
-        {/* Submit */}
         <button
           onClick={run}
           disabled={!canSubmit}
-          className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold !text-white shadow-lg shadow-violet-900/30 transition-all hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? (
             <>
@@ -366,21 +306,17 @@ export default function Evaluate() {
         </button>
       </div>
 
-      {/* Pipeline progress (single-file modes only) */}
+      {/* Pipeline progress */}
       {tab !== "batch" && (loading || events.length > 0) && (
         <AgentProgress events={events} isLoading={loading} />
       )}
 
       {/* Batch results table */}
       {tab === "batch" && batchItems.length > 0 && (
-        <div className="rounded-xl border border-white/[0.06] bg-[#13131a] overflow-hidden">
+        <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] overflow-hidden">
           <div className="border-b border-white/[0.06] px-5 py-3.5 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Batch Results</h2>
-            {batchDone && (
-              <span className="text-xs text-emerald-400">
-                {doneCount}/{batchItems.length} completed
-              </span>
-            )}
+            {batchDone && <span className="text-xs text-emerald-400">{doneCount}/{batchItems.length} completed</span>}
           </div>
           <table className="w-full text-sm">
             <thead>
@@ -400,8 +336,7 @@ export default function Evaluate() {
                     {item.status === "queued"  && <span className="text-xs text-gray-600">Queued</span>}
                     {item.status === "running" && (
                       <span className="flex items-center gap-1.5 text-xs text-violet-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
-                        Running…
+                        <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />Running…
                       </span>
                     )}
                     {item.status === "done"  && <span className="text-xs text-emerald-400">Done</span>}
@@ -430,17 +365,13 @@ export default function Evaluate() {
             <ScoreGauge score={result.originalScore} label="Original Score" />
             <ScoreGauge score={result.finalScore}    label="Final Score" />
           </div>
-
           <StructuredPromptViewer content={result.structuredPrompt || result.finalPrompt} />
-
           <ScoreCard result={result} />
-
-          <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+          <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
             <h2 className="mb-1 text-sm font-semibold text-white">Dimension Analysis</h2>
             <p className="mb-4 text-xs text-gray-500">Original vs improved across all quality dimensions</p>
             <RadarChart originalDimensions={origDims} finalDimensions={finalDims} />
           </div>
-
           {result.iterationCount > 0 && (
             <DiffViewer
               originalPrompt={result.originalPrompt}

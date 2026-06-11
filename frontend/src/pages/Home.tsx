@@ -5,16 +5,8 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { getAnalytics } from "../api/client";
+import { useTheme } from "../context/ThemeContext";
 import type { AnalyticsResult } from "../types";
-
-const TT = {
-  contentStyle: {
-    background: "#16161f", border: "1px solid rgba(255,255,255,0.08)",
-    borderRadius: "10px", color: "#f9fafb", fontSize: "12px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-  },
-  labelStyle: { color: "#6b7280" },
-  cursor: { stroke: "rgba(255,255,255,0.06)" },
-};
 
 function KpiCard({
   label, value, sub, accent, icon,
@@ -26,7 +18,7 @@ function KpiCard({
   };
   const c = accents[accent] ?? accents.violet;
   return (
-    <div className={`relative overflow-hidden rounded-xl border border-white/[0.06] bg-[#13131a] p-6 shadow-lg ${c.glow}`}>
+    <div className={`relative overflow-hidden rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6 shadow-lg ${c.glow}`}>
       <div className={`absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-lg ${c.bg} ring-1 ${c.ring} text-lg`}>
         {icon}
       </div>
@@ -49,12 +41,31 @@ const PIPELINE_STEPS = [
 const BAR_COLORS = ["#7c3aed", "#6d28d9", "#5b21b6", "#4c1d95", "#3b0764", "#2e1065"];
 
 export default function Home() {
-  const [data, setData]   = useState<AnalyticsResult | null>(null);
-  const navigate          = useNavigate();
+  const [data, setData] = useState<AnalyticsResult | null>(null);
+  const navigate        = useNavigate();
+  const { theme }       = useTheme();
+  const isDark          = theme === "dark";
 
   useEffect(() => {
     getAnalytics().then(setData).catch(console.error);
   }, []);
+
+  const TT = {
+    contentStyle: {
+      background: isDark ? "#16161f" : "#ffffff",
+      border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.10)",
+      borderRadius: "10px",
+      color: isDark ? "#f9fafb" : "#111827",
+      fontSize: "12px",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+    },
+    labelStyle: { color: isDark ? "#6b7280" : "#9ca3af" },
+    cursor: { stroke: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" },
+  };
+
+  const gridStroke  = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)";
+  const axisStroke  = isDark ? "#374151" : "#d1d5db";
+  const tickFill    = isDark ? "#6b7280" : "#9ca3af";
 
   if (!data) {
     return (
@@ -70,8 +81,7 @@ export default function Home() {
     <div className="space-y-7">
 
       {/* ── Hero banner ──────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-600/10 via-[#13131a] to-[#13131a] p-8">
-        {/* Decorative glow */}
+      <div className="relative overflow-hidden rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-600/10 via-[var(--pg-card)] to-[var(--pg-card)] p-8">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-violet-600/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-10 left-1/3 h-40 w-80 rounded-full bg-purple-700/8 blur-3xl" />
 
@@ -107,7 +117,7 @@ export default function Home() {
           {isEmpty && (
             <button
               onClick={() => navigate("/evaluate")}
-              className="flex-shrink-0 flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-900/40 transition-all hover:bg-violet-500"
+              className="flex-shrink-0 flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold !text-white shadow-lg shadow-violet-900/40 transition-all hover:bg-violet-500"
             >
               ⚡ Evaluate Your First Prompt
             </button>
@@ -116,13 +126,13 @@ export default function Home() {
       </div>
 
       {/* ── Pipeline overview ─────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+      <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
         <h2 className="mb-5 text-sm font-semibold text-white">How the Pipeline Works</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {PIPELINE_STEPS.map((step, i) => (
             <div key={step.label} className="flex flex-col items-center text-center gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] p-3">
               <div className="flex items-center gap-1.5">
-                <span className={`text-xs font-bold text-gray-600`}>{i + 1}</span>
+                <span className="text-xs font-bold text-gray-600">{i + 1}</span>
                 <span className={`h-1.5 w-1.5 rounded-full ${step.dot}`} />
               </div>
               <p className={`text-xs font-bold ${step.color}`}>{step.label}</p>
@@ -136,20 +146,20 @@ export default function Home() {
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-white">Quality Metrics</h2>
-          <span className="rounded-full border border-white/[0.06] bg-[#13131a] px-3 py-1 text-xs text-gray-500">
+          <span className="rounded-full border border-white/[0.06] bg-[var(--pg-card)] px-3 py-1 text-xs text-gray-500">
             {data.totalEvaluations ?? 0} evaluations total
           </span>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KpiCard label="Average Score"   value={data.avgScore.toFixed(2)}                          sub="Across all prompts"           accent="violet" icon="✦" />
-          <KpiCard label="Total Evaluated" value={String(data.totalEvaluations ?? 0)}                sub="Prompts processed"            accent="sky"    icon="⊞" />
-          <KpiCard label="Avg Improvement" value={`+${(data.avgImprovement ?? 0).toFixed(1)}%`}      sub="Quality gain after rewrite"   accent="emerald" icon="↑" />
+          <KpiCard label="Average Score"   value={data.avgScore.toFixed(2)}                     sub="Across all prompts"         accent="violet"  icon="✦" />
+          <KpiCard label="Total Evaluated" value={String(data.totalEvaluations ?? 0)}            sub="Prompts processed"          accent="sky"     icon="⊞" />
+          <KpiCard label="Avg Improvement" value={`+${(data.avgImprovement ?? 0).toFixed(1)}%`} sub="Quality gain after rewrite" accent="emerald" icon="↑" />
         </div>
       </div>
 
       {/* ── Charts ────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+        <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Score Trend</h2>
             <span className="text-[10px] text-gray-600">7-day rolling</span>
@@ -168,9 +178,9 @@ export default function Home() {
                     <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="day" stroke="#374151" tick={{ fontSize: 10, fill: "#6b7280" }} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 1]} stroke="#374151" tick={{ fontSize: 10, fill: "#6b7280" }} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="day" stroke={axisStroke} tick={{ fontSize: 10, fill: tickFill }} tickLine={false} axisLine={false} />
+                <YAxis domain={[0, 1]} stroke={axisStroke} tick={{ fontSize: 10, fill: tickFill }} tickLine={false} axisLine={false} />
                 <Tooltip {...TT} formatter={(v) => [(v as number).toFixed(2), "Score"]} />
                 <Line type="monotone" dataKey="avgScore" stroke="#7c3aed" strokeWidth={2.5} dot={{ r: 3.5, fill: "#7c3aed", strokeWidth: 0 }} activeDot={{ r: 5, fill: "#a78bfa", strokeWidth: 0 }} />
               </LineChart>
@@ -178,7 +188,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+        <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-white">Score by Domain</h2>
             <span className="text-[10px] text-gray-600">avg score</span>
@@ -191,9 +201,9 @@ export default function Home() {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={data.scoreByDomain} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-                <XAxis dataKey="domain" stroke="#374151" tick={{ fontSize: 10, fill: "#6b7280" }} tickLine={false} axisLine={false} />
-                <YAxis domain={[0, 1]} stroke="#374151" tick={{ fontSize: 10, fill: "#6b7280" }} tickLine={false} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                <XAxis dataKey="domain" stroke={axisStroke} tick={{ fontSize: 10, fill: tickFill }} tickLine={false} axisLine={false} />
+                <YAxis domain={[0, 1]} stroke={axisStroke} tick={{ fontSize: 10, fill: tickFill }} tickLine={false} axisLine={false} />
                 <Tooltip {...TT} formatter={(v) => [(v as number).toFixed(2), "Avg Score"]} />
                 <Bar dataKey="avgScore" radius={[5, 5, 0, 0]} maxBarSize={48}>
                   {data.scoreByDomain.map((_, i) => (
@@ -207,7 +217,7 @@ export default function Home() {
       </div>
 
       {/* ── Top failures ──────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#13131a] p-6">
+      <div className="rounded-xl border border-white/[0.06] bg-[var(--pg-card)] p-6">
         <h2 className="mb-4 text-sm font-semibold text-white">Top Failure Patterns</h2>
         {data.topFailures.length === 0 ? (
           <div className="flex items-center gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
