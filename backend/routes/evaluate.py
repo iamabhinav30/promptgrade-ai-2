@@ -35,6 +35,10 @@ def _build_initial_state(prompt: str, domain: str, evaluation_id: str = "", refo
         "domain_hint": domain_hint,
         "prompt_category": "",
         "previous_score": 0.0,
+        "guard_status": "pass",
+        "guard_message": "",
+        "guard_suggestion": "",
+        "guard_reason": "",
         "retries": 0,
         "best_score": 0.0,
         "score": 0.0,
@@ -105,6 +109,18 @@ async def _run_streaming(initial_state: dict[str, Any]):
     progress_mod.release(evaluation_id)
 
     final_state = future.result()
+
+    # ── Guardrail rejection — emit early-exit event, skip full evaluation ────
+    if final_state.get("guard_status") == "reject":
+        rejection = {
+            "type":       "guard_rejected",
+            "reason":     final_state.get("guard_reason", "not_a_prompt"),
+            "message":    final_state.get("guard_message", "This doesn't look like an AI prompt."),
+            "suggestion": final_state.get("guard_suggestion", ""),
+        }
+        yield f"data: {json.dumps(rejection)}\n\n"
+        return
+
     result_dict = _state_to_result(final_state)
     result_dict["createdAt"] = datetime.now(timezone.utc).isoformat()
     validated = EvaluationResult.model_validate(result_dict)

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { evaluateBatch, evaluateFileStream, evaluatePromptStream } from "../api/client";
+import { GuardRejectionError, evaluateBatch, evaluateFileStream, evaluatePromptStream } from "../api/client";
 import AgentProgress from "../components/AgentProgress";
 import DiffViewer from "../components/DiffViewer";
 import RadarChart from "../components/RadarChart";
@@ -67,7 +67,7 @@ function ScorePill({ score }: { score: number }) {
 export default function Evaluate() {
   const [tab, setTab]                     = useState<Tab>("text");
   const [prompt, setPrompt]               = useState("");
-  const [domain, setDomain]               = useState<Domain>("frontend");
+  const [domain, setDomain]               = useState<Domain | null>(null);
   const [domainHint, setDomainHint]       = useState("");
   const [reformatPrompt, setReformatPrompt] = useState(true);
   const [file, setFile]                   = useState<File | null>(null);
@@ -77,6 +77,7 @@ export default function Evaluate() {
   const [events, setEvents]               = useState<AgentProgressEvent[]>([]);
   const [result, setResult]               = useState<EvaluationResult | null>(null);
   const [error, setError]                 = useState("");
+  const [guardRejection, setGuardRejection] = useState<{ message: string; suggestion: string; reason: string } | null>(null);
   const fileRef                           = useRef<HTMLInputElement>(null);
   const batchRef                          = useRef<HTMLInputElement>(null);
 
@@ -89,19 +90,25 @@ export default function Evaluate() {
   }
 
   async function run() {
-    setError(""); setResult(null); setBatchItems([]);
+    setError(""); setResult(null); setBatchItems([]); setGuardRejection(null);
     setLoading(true);
     setEvents([{ agent: "intake", status: "running" }]);
     try {
       if (tab === "batch") { await runBatch(); return; }
+      const effectiveDomain = domain ?? "other";
       const data = tab === "file" && file
-        ? await evaluateFileStream(file, domain, mergeEvent, reformatPrompt, domainHint)
-        : await evaluatePromptStream(prompt, domain, mergeEvent, reformatPrompt, domainHint);
+        ? await evaluateFileStream(file, effectiveDomain, mergeEvent, reformatPrompt, domainHint)
+        : await evaluatePromptStream(prompt, effectiveDomain, mergeEvent, reformatPrompt, domainHint);
       setEvents(completeEvents(data, reformatPrompt));
       setResult(data);
     } catch (e: unknown) {
-      setError((e as { message?: string })?.message || "Evaluation failed");
-      setEvents([]);
+      if (e instanceof GuardRejectionError) {
+        setGuardRejection({ message: e.message, suggestion: e.suggestion, reason: e.reason });
+        setEvents([]);
+      } else {
+        setError((e as { message?: string })?.message || "Evaluation failed");
+        setEvents([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +118,7 @@ export default function Evaluate() {
     const items: BatchItem[] = batchFiles.map(f => ({ file: f, status: "queued" }));
     setBatchItems([...items]);
     await evaluateBatch(
-      batchFiles, domain,
+      batchFiles, domain ?? "other",
       (i) => setBatchItems(prev => { const n = [...prev]; n[i] = { ...n[i], status: "running" }; return n; }),
       (i, res) => setBatchItems(prev => { const n = [...prev]; n[i] = { ...n[i], status: "done", result: res }; return n; }),
       (i, err) => setBatchItems(prev => { const n = [...prev]; n[i] = { ...n[i], status: "error", error: err }; return n; }),
@@ -188,6 +195,12 @@ export default function Evaluate() {
             ))}
           </div>
 
+          {domain === null && (
+            <p className="mt-3 text-[11px] text-gray-600">
+              No domain selected — your prompt will be evaluated using universal criteria. Select a domain for a more targeted rubric.
+            </p>
+          )}
+
           {domain === "other" && (
             <div className="mt-4">
               <div className="mb-1.5 flex items-center justify-between">
@@ -247,7 +260,7 @@ export default function Evaluate() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-xs font-semibold uppercase tracking-widest text-gray-500">Prompt</label>
-              <button onClick={() => setPrompt(EXAMPLES[domain])} className="text-[11px] text-violet-500 hover:text-violet-400 transition-colors">
+              <button onClick={() => setPrompt(EXAMPLES[domain ?? "other"])} className="text-[11px] text-violet-500 hover:text-violet-400 transition-colors">
                 Use example →
               </button>
             </div>
@@ -257,7 +270,7 @@ export default function Evaluate() {
                 maxLength={8000}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder={`Paste your ${domain.replace("_", " ")} prompt here… (min 20 chars)`}
+                placeholder={`Paste your ${domain ? domain.replace("_", " ") : "AI"} prompt here… (min 20 chars)`}
                 className="w-full resize-none rounded-lg border border-white/[0.06] bg-[var(--pg-page)] px-4 py-3 text-sm text-gray-200 placeholder-gray-700 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition-colors leading-relaxed"
               />
               <span className={`absolute bottom-3 right-3 text-[11px] tabular-nums ${prompt.length > 7200 ? "text-amber-400" : "text-gray-700"}`}>
@@ -364,6 +377,39 @@ export default function Evaluate() {
           )}
         </button>
       </div>
+
+      {/* Guard rejection card */}
+      {guardRejection && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.07] p-6 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 text-xl">
+              ⚠
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-amber-300">Not a valid AI prompt</h3>
+              <p className="mt-1 text-sm text-amber-200/80">{guardRejection.message}</p>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.05] px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-500 mb-1.5">What PromptGrade expects</p>
+            <p className="text-sm text-gray-300">An <span className="text-amber-300 font-medium">AI prompt</span> is an instruction you write to direct an AI to perform a task — build something, write something, analyze something, design something.</p>
+          </div>
+
+          {guardRejection.suggestion && (
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex-shrink-0 text-violet-400">→</span>
+              <p className="text-sm text-gray-400"><span className="text-gray-300 font-medium">Try instead: </span>{guardRejection.suggestion}</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] text-gray-500">e.g. "Write a REST API with JWT auth"</span>
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] text-gray-500">e.g. "Build a responsive navbar in React"</span>
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] text-gray-500">e.g. "Design a multi-tenant database schema"</span>
+          </div>
+        </div>
+      )}
 
       {/* Pipeline progress */}
       {tab !== "batch" && (loading || events.length > 0) && (

@@ -2,6 +2,7 @@ from langgraph.graph import END, START, StateGraph
 
 from agents.classify import classify_node
 from agents.evaluate import evaluate_node
+from agents.guard import guard_node, rejection_node
 from agents.intake import intake_node
 from agents.report import report_node
 from agents.rewriter import rewrite_content_node, rewrite_context_node, rewrite_output_node
@@ -10,7 +11,10 @@ from agents.validator import validator_node
 from graph.state import GraphState
 
 _MAX_RETRIES          = 3
-_STAGNATION_THRESHOLD = 0.03   # stop if score improved less than this between iterations
+_STAGNATION_THRESHOLD = 0.03   # stop if improvement < this between iterations
+
+def route_after_guard(state: GraphState) -> str:
+    return "classify" if state.get("guard_status", "pass") == "pass" else "rejected"
 
 
 def route_after_classify(state: GraphState) -> str:
@@ -51,6 +55,8 @@ def build_graph():
     graph = StateGraph(GraphState)
 
     graph.add_node("intake",          intake_node)
+    graph.add_node("guard",           guard_node)
+    graph.add_node("rejected",        rejection_node)
     graph.add_node("classify",        classify_node)
     graph.add_node("structure",       structure_node)
     graph.add_node("evaluate",        evaluate_node)
@@ -61,7 +67,14 @@ def build_graph():
     graph.add_node("report",          report_node)
 
     graph.add_edge(START,    "intake")
-    graph.add_edge("intake", "classify")
+    graph.add_edge("intake", "guard")
+
+    graph.add_conditional_edges("guard", route_after_guard, {
+        "classify":  "classify",
+        "rejected":  "rejected",
+    })
+
+    graph.add_edge("rejected", END)
 
     graph.add_conditional_edges("classify", route_after_classify, {
         "structure": "structure",
@@ -77,7 +90,6 @@ def build_graph():
         "rewrite_output":  "rewrite_output",
     })
 
-    # All three rewriters loop back to evaluate
     graph.add_edge("rewrite_content", "evaluate")
     graph.add_edge("rewrite_context", "evaluate")
     graph.add_edge("rewrite_output",  "evaluate")

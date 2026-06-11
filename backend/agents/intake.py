@@ -29,6 +29,10 @@ def intake_node(state: GraphState) -> GraphState:
     state["structured_prompt"] = ""
     state["prompt_category"]   = ""
     state["previous_score"]    = 0.0
+    state["guard_status"]      = "pass"
+    state["guard_message"]     = ""
+    state["guard_suggestion"]  = ""
+    state["guard_reason"]      = ""
     state["retries"]           = 0
     state["best_score"]        = 0.0
     state["score"]             = 0.0

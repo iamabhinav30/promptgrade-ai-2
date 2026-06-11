@@ -2,6 +2,7 @@ import type { AgentProgressEvent } from "../types";
 
 const ALL_STEPS = [
   { key: "intake",    label: "Intake",    desc: "Validating" },
+  { key: "guard",     label: "Guard",     desc: "Checking input" },
   { key: "classify",  label: "Classify",  desc: "Detecting type" },
   { key: "structure", label: "Structure", desc: "Formatting" },
   { key: "evaluate",  label: "Evaluate",  desc: "Scoring" },

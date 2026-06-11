@@ -10,6 +10,17 @@ const api = axios.create({
 
 // ── Streaming evaluate (primary – real-time agent progress) ──────────────────
 
+export class GuardRejectionError extends Error {
+  reason: string;
+  suggestion: string;
+  constructor(message: string, reason: string, suggestion: string) {
+    super(message);
+    this.name = "GuardRejectionError";
+    this.reason = reason;
+    this.suggestion = suggestion;
+  }
+}
+
 async function _readStream(
   response: Response,
   onEvent: (e: AgentProgressEvent) => void,
@@ -41,6 +52,12 @@ async function _readStream(
         if (data.type === "result") {
           const { type: _t, ...rest } = data;
           result = rest as unknown as EvaluationResult;
+        } else if (data.type === "guard_rejected") {
+          throw new GuardRejectionError(
+            String(data.message || "This doesn't look like an AI prompt."),
+            String(data.reason || "not_a_prompt"),
+            String(data.suggestion || ""),
+          );
         } else {
           onEvent(data as unknown as AgentProgressEvent);
         }

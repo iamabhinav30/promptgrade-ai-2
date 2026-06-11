@@ -11,6 +11,10 @@ class GraphState(TypedDict):
     domain_hint: str
     prompt_category: str
     previous_score: float
+    guard_status: str
+    guard_message: str
+    guard_suggestion: str
+    guard_reason: str
     retries: int
     best_score: float
     score: float
