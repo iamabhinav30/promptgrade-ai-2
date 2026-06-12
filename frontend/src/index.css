@@ -122,6 +122,26 @@ html.dark .hover\:bg-white\/\[0\.05\]:hover { background-color: rgba(255,255,255
 .hover\:bg-white\/\[0\.06\]:hover           { background-color: rgba(0,0,0,0.05); }
 html.dark .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(255,255,255,0.06); }
 
+/* ── Gray text: dark mode restores readable light values ─────────────────── */
+.text-gray-400             { color: #4b5563; }
+html.dark .text-gray-400   { color: #9ca3af; }
+
+.text-gray-500             { color: #374151; }
+html.dark .text-gray-500   { color: #6b7280; }
+
+.text-gray-600             { color: #1f2937; }
+html.dark .text-gray-600   { color: #4b5563; }
+
+.text-gray-700             { color: #111827; }
+html.dark .text-gray-700   { color: #374151; }
+
+/* hover variants */
+.hover\:text-gray-400:hover           { color: #4b5563; }
+html.dark .hover\:text-gray-400:hover { color: #9ca3af; }
+
+.hover\:text-gray-500:hover           { color: #374151; }
+html.dark .hover\:text-gray-500:hover { color: #6b7280; }
+
 /* ── Placeholder ──────────────────────────────────────────────────────────── */
 .placeholder-gray-700::placeholder            { color: #9ca3af; }
 html.dark .placeholder-gray-700::placeholder  { color: #374151; }
